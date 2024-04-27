@@ -15,10 +15,10 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class WebParser {
-    private List<String> productLinksFromMainPage;
-    private ParserHelper parserHelper;
+    private final List<String> productLinksFromMainPage;
+    private final ParserHelper parserHelper;
     private int totalRequests;
-    private static final String PARSE_URL = "/maenner/bekleidung";
+    private static final String PARSE_URL = "/c/maenner/bekleidung-20290";
     private static final String CONTEXT_PATH = "https://www.aboutyou.de";
 
     public WebParser() {
@@ -36,7 +36,9 @@ public class WebParser {
         }
         System.out.println(" Done");
         System.out.println("\nTOTAL REQUESTS: " + totalRequests);
+        System.out.println("\nNumber of product links found: " + productLinksFromMainPage.size());
         System.out.println("TOTAL PRODUCTS EXTRACTED: " + Storage.productMap.size());
+
     }
 
     private void parsePageIntoProductLinks() {
@@ -47,13 +49,17 @@ public class WebParser {
         for (Element row : mainContainerRows) {
             if (row.hasClass(productRowClass)) {
                 for (Element productTile : row.children()) {
-                    //List productLinksFromMainPage is redundant,
-                    //We can already call here parseProductFromLink()
-                    productLinksFromMainPage.add(productTile.attr("href"));
+                    String productLink = productTile.attr("href");
+                    System.out.println("Found product link: " + productLink);
+                    if (!productLinksFromMainPage.contains(productLink)) {
+                        productLinksFromMainPage.add(productLink);
+                    }
                 }
             }
         }
     }
+
+
 
     //recursive function
     private void parseProductFromLink(String link) {
@@ -69,6 +75,12 @@ public class WebParser {
         product.setBrand(parserHelper.getProductBrand(document));
         product.setBasePrice(parserHelper.getProductBasePrice(document));
         product.setSalePrice(parserHelper.getProductSalePrice(document));
+        // Add debug output to check extracted product data
+        System.out.println("Product Article ID: " + product.getArticleID());
+        System.out.println("Product Name: " + product.getName());
+        System.out.println("Product Brand: " + product.getBrand());
+        System.out.println("Product Base Price: " + product.getBasePrice());
+        System.out.println("Product Sale Price: " + product.getSalePrice());
 
         Elements colorLinks = parserHelper.getProductColorLinks(document);
         product.setColor(colorLinks.first().text());
@@ -79,6 +91,7 @@ public class WebParser {
             parseProductFromLink(colorLink.attr("href"));
         }
     }
+
 
     private Optional<Document> getDocumentFromUrl(String url) {
         try {
@@ -92,9 +105,9 @@ public class WebParser {
             this.totalRequests++;
             return Optional.of(document);
         } catch (IOException e) {
-            System.out.println("Can't connect to " + CONTEXT_PATH + url);
-            System.out.println("Please try again!");
+            System.err.println("Error connecting to " + CONTEXT_PATH + url + ": " + e.getMessage());
+            return Optional.empty();
         }
-        return Optional.empty();
     }
+
 }

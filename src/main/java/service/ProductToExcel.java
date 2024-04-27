@@ -46,11 +46,12 @@ public class ProductToExcel {
     }
 
     public static void addProductToStorage(Product product) {
-
         if (product != null) {
             Storage.productMap.put(product.getArticleID(), product);
+            System.out.println("Product added to Storage.productMap: " + product.getName());
         } else {
             System.out.println("Error: Product is null.");
         }
     }
+
 }
